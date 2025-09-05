@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Application Tracker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 5px;
+        }
+
+        .form-group input, .form-group select {
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+
+        .applications-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .application-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .application-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .application-item.follow-up-needed {
+            border-left-color: #ff9800;
+            background: #fff8e1;
+        }
+
+        .application-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .application-title h3 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .application-company {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .application-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        .application-detail {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-applied { background: #e3f2fd; color: #1976d2; }
+        .status-interview { background: #f3e5f5; color: #7b1fa2; }
+        .status-rejected { background: #ffebee; color: #c62828; }
+        .status-accepted { background: #e8f5e9; color: #2e7d32; }
+        .status-ghosted { background: #f5f5f5; color: #616161; }
+
+        .follow-up-badge {
+            background: #ff9800;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-edit {
+            background: #4caf50;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-small:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-count {
+            background: #667eea;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .application-header {
+                flex-direction: column;
+            }
+            
+            .chart-container {
+                height: 250px;
+            }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            color: #333;
+        }
+
+        .btn-close {
+            background: #f44336;
+            color: white;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 Job Application Tracker</h1>
+            <p>Track your job applications and never miss a follow-up</p>
+        </div>
+
+        <!-- Add New Application Form -->
+        <div class="card">
+            <h2 class="section-title">Add New Application</h2>
+            <form id="jobForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="company">Company Name *</label>
+                        <input type="text" id="company" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="jobTitle">Job Title *</label>
+                        <input type="text" id="jobTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="jdLink">JD Link (URL)</label>
+                        <input type="url" id="jdLink" placeholder="https://...">
+                    </div>
+                    <div class="form-group">
+                        <label for="salary">Salary Expectation</label>
+                        <input type="text" id="salary" placeholder="e.g., $80,000 - $100,000">
+                    </div>
+                    <div class="form-group">
+                        <label for="applicationDate">Application Date</label>
+                        <input type="date" id="applicationDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="status">Status</label>
+                        <select id="status">
+                            <option value="applied">Applied</option>
+                            <option value="interview">Interview Scheduled</option>
+                            <option value="rejected">Rejected</option>
+                            <option value="accepted">Accepted</option>
+                            <option value="ghosted">Ghosted</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Application</button>
+            </form>
+        </div>
+
+        <!-- Statistics Overview -->
+        <div class="card">
+            <h2 class="section-title">Overview</h2>
+            <div class="stats-grid" id="statsGrid">
+                <!-- Stats will be inserted here -->
+            </div>
+            <div class="chart-container">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Filter Buttons -->
+        <div class="card">
+            <h2 class="section-title">Filter Applications</h2>
+            <div class="filters" id="filterButtons">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="applied">Applied</button>
+                <button class="filter-btn" data-filter="interview">Interview</button>
+                <button class="filter-btn" data-filter="rejected">Rejected</button>
+                <button class="filter-btn" data-filter="accepted">Accepted</button>
+                <button class="filter-btn" data-filter="ghosted">Ghosted</button>
+                <button class="filter-btn" data-filter="followup">Follow-up Needed</button>
+            </div>
+        </div>
+
+        <!-- Applications List -->
+        <div class="card">
+            <h2 class="section-title">
+                Applications
+                <span class="section-count" id="applicationCount">0</span>
+            </h2>
+            <div class="applications-list" id="applicationsList">
+                <!-- Applications will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Application</h2>
+            </div>
+            <form id="editForm">
+                <input type="hidden" id="editId">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="editCompany">Company Name *</label>
+                        <input type="text" id="editCompany" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editJobTitle">Job Title *</label>
+                        <input type="text" id="editJobTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editJdLink">JD Link (URL)</label>
+                        <input type="url" id="editJdLink">
+                    </div>
+                    <div class="form-group">
+                        <label for="editSalary">Salary Expectation</label>
+                        <input type="text" id="editSalary">
+                    </div>
+                    <div class="form-group">
+                        <label for="editApplicationDate">Application Date</label>
+                        <input type="date" id="editApplicationDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="editStatus">Status</label>
+                        <select id="editStatus">
+                            <option value="applied">Applied</option>
+                            <option value="interview">Interview Scheduled</option>
+                            <option value="rejected">Rejected</option>
+                            <option value="accepted">Accepted</option>
+                            <option value="ghosted">Ghosted</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="margin-top: 20px;">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <button type="button" class="btn btn-close" onclick="closeEditModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Data Management
+        let applications = JSON.parse(localStorage.getItem('jobApplications')) || [];
+        let currentFilter = 'all';
+        let statusChart = null;
+
+        // Initialize the app
+        function init() {
+            // Set default date to today
+            document.getElementById('applicationDate').valueAsDate = new Date();
+            
+            // Check for auto-ghosting and follow-ups
+            checkApplicationStatuses();
+            
+            // Render everything
+            renderApplications();
+            updateStats();
+            updateChart();
+            
+            // Event Listeners
+            document.getElementById('jobForm').addEventListener('submit', addApplication);
+            document.getElementById('editForm').addEventListener('submit', saveEdit);
+            
+            // Filter buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentFilter = e.target.dataset.filter;
+                    renderApplications();
+                });
+            });
+        }
+
+        // Check for auto-ghosting and follow-up needed
+        function checkApplicationStatuses() {
+            const today = new Date();
+            let updated = false;
+            
+            applications.forEach(app => {
+                const appDate = new Date(app.applicationDate);
+                const daysSince = Math.floor((today - appDate) / (1000 * 60 * 60 * 24));
+                
+                // Auto-ghost after 30 days if status is still "applied"
+                if (daysSince >= 30 && app.status === 'applied') {
+                    app.status = 'ghosted';
+                    app.autoGhosted = true;
+                    updated = true;
+                }
+                
+                // Mark follow-up needed after 15 days
+                app.followUpNeeded = (daysSince >= 15 && daysSince < 30 && app.status === 'applied');
+            });
+            
+            if (updated) {
+                saveApplications();
+            }
+        }
+
+        // Add new application
+        function addApplication(e) {
+            e.preventDefault();
+            
+            const application = {
+                id: Date.now(),
+                company: document.getElementById('company').value,
+                jobTitle: document.getElementById('jobTitle').value,
+                jdLink: document.getElementById('jdLink').value,
+                salary: document.getElementById('salary').value,
+                applicationDate: document.getElementById('applicationDate').value,
+                status: document.getElementById('status').value,
+                lastUpdated: new Date().toISOString()
+            };
+            
+            applications.unshift(application);
+            saveApplications();
+            
+            // Reset form
+            document.getElementById('jobForm').reset();
+            document.getElementById('applicationDate').valueAsDate = new Date();
+            
+            // Update UI
+            renderApplications();
+            updateStats();
+            updateChart();
+        }
+
+        // Save to localStorage
+        function saveApplications() {
+            localStorage.setItem('jobApplications', JSON.stringify(applications));
+        }
+
+        // Render applications list
+        function renderApplications() {
+            const container = document.getElementById('applicationsList');
+            
+            // Filter applications
+            let filtered = applications;
+            if (currentFilter !== 'all') {
+                if (currentFilter === 'followup') {
+                    filtered = applications.filter(app => app.followUpNeeded);
+                } else {
+                    filtered = applications.filter(app => app.status === currentFilter);
+                }
+            }
+            
+            // Update count
+            document.getElementById('applicationCount').textContent = filtered.length;
+            
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>No applications found</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = filtered.map(app => {
+                const appDate = new Date(app.applicationDate);
+                const formattedDate = appDate.toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric' 
+                });
+                
+                return `
+                    <div class="application-item ${app.followUpNeeded ? 'follow-up-needed' : ''}">
+                        <div class="application-header">
+                            <div class="application-title">
+                                <h3>${app.jobTitle}</h3>
+                                <p class="application-company">${app.company}</p>
+                            </div>
+                            <div style="display: flex; align-items: center;">
+                                <span class="status-badge status-${app.status}">${app.status}</span>
+                                ${app.followUpNeeded ? '<span class="follow-up-badge">Follow-up Needed</span>' : ''}
+                            </div>
+                        </div>
+                        <div class="application-details">
+                            <div class="application-detail">
+                                📅 ${formattedDate}
+                            </div>
+                            ${app.salary ? `<div class="application-detail">💰 ${app.salary}</div>` : ''}
+                            ${app.jdLink ? `<div class="application-detail">🔗 <a href="${app.jdLink}" target="_blank" style="color: #667eea;">View JD</a></div>` : ''}
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn-small btn-edit" onclick="openEditModal(${app.id})">Edit Status</button>
+                            <button class="btn-small btn-delete" onclick="deleteApplication(${app.id})">Delete</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Update statistics
+        function updateStats() {
+            const stats = {
+                total: applications.length,
+                applied: applications.filter(a => a.status === 'applied').length,
+                interview: applications.filter(a => a.status === 'interview').length,
+                accepted: applications.filter(a => a.status === 'accepted').length,
+                rejected: applications.filter(a => a.status === 'rejected').length,
+                ghosted: applications.filter(a => a.status === 'ghosted').length,
+                followup: applications.filter(a => a.followUpNeeded).length
+            };
+            
+            document.getElementById('statsGrid').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${stats.total}</div>
+                    <div class="stat-label">Total</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.applied}</div>
+                    <div class="stat-label">Applied</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.interview}</div>
+                    <div class="stat-label">Interviews</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.accepted}</div>
+                    <div class="stat-label">Accepted</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.followup}</div>
+                    <div class="stat-label">Need Follow-up</div>
+                </div>
+            `;
+        }
+
+        // Update chart
+        function updateChart() {
+            const ctx = document.getElementById('statusChart').getContext('2d');
+            
+            const statusCounts = {
+                'Applied': applications.filter(a => a.status === 'applied').length,
+                'Interview': applications.filter(a => a.status === 'interview').length,
+                'Accepted': applications.filter(a => a.status === 'accepted').length,
+                'Rejected': applications.filter(a => a.status === 'rejected').length,
+                'Ghosted': applications.filter(a => a.status === 'ghosted').length
+            };
+            
+            // Destroy existing chart if it exists
+            if (statusChart) {
+                statusChart.destroy();
+            }
+            
+            statusChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(statusCounts),
+                    datasets: [{
+                        data: Object.values(statusCounts),
+                        backgroundColor: [
+                            '#1976d2',
+                            '#7b1fa2',
+                            '#2e7d32',
+                            '#c62828',
+                            '#616161'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Delete application
+        function deleteApplication(id) {
+            if (confirm('Are you sure you want to delete this application?')) {
+                applications = applications.filter(app => app.id !== id);
+                saveApplications();
+                renderApplications();
+                updateStats();
+                updateChart();
+            }
+        }
+
+        // Open edit modal
+        function openEditModal(id) {
+            const app = applications.find(a => a.id === id);
+            if (!app) return;
+            
+            document.getElementById('editId').value = app.id;
+            document.getElementById('editCompany').value = app.company;
+            document.getElementById('editJobTitle').value = app.jobTitle;
+            document.getElementById('editJdLink').value = app.jdLink;
+            document.getElementById('editSalary').value = app.salary;
+            document.getElementById('editApplicationDate').value = app.applicationDate;
+            document.getElementById('editStatus').value = app.status;
+            
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        // Close edit modal
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('active');
+        }
+
+        // Save edit
+        function saveEdit(e) {
+            e.preventDefault();
+            
+            const id = parseInt(document.getElementById('editId').value);
+            const appIndex = applications.findIndex(a => a.id === id);
+            
+            if (appIndex !== -1) {
+                applications[appIndex] = {
+                    ...applications[appIndex],
+                    company: document.getElementById('editCompany').value,
+                    jobTitle: document.getElementById('editJobTitle').value,
+                    jdLink: document.getElementById('editJdLink').value,
+                    salary: document.getElementById('editSalary').value,
+                    applicationDate: document.getElementById('editApplicationDate').value,
+                    status: document.getElementById('editStatus').value,
+                    lastUpdated: new Date().toISOString()
+                };
+                
+                // Reset follow-up flag if status changed
+                if (applications[appIndex].status !== 'applied') {
+                    applications[appIndex].followUpNeeded = false;
+                }
+                
+                saveApplications();
+                closeEditModal();
+                checkApplicationStatuses();
+                renderApplications();
+                updateStats();
+                updateChart();
+            }
+        }
+
+        // Initialize app on load
+        init();
+    </script>
+</body>
+</html>
